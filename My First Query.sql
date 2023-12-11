@@ -323,5 +323,116 @@ ON d.department_id = e.department_id
 GROUP BY d.department_name;
 
 
+-- Advanced Join Challenges
+
+--1
 
 
+--Write a query to return employee details for all employees as well 
+--as the first and last name of each employee's manager. Include 
+--the following columns:
+-- employee_id
+-- first_name
+-- last_name
+-- manager_first_name (alias for first_name)
+-- manager_last_name (alias for last_name)
+
+SELECT e.employee_id, e.first_name, e.last_name, e2.first_name AS manager_first_name, e2.last_name AS manager_last_name 
+FROM hcm.employees e LEFT OUTER JOIN hcm.employees e2 
+ON e.manager_id = e2.employee_id;
+
+
+--2 
+
+
+--Write a query to return all the products at each warehouse. 
+--Include the following attributes:
+-- product_id
+-- product_name
+-- warehouse_id
+-- warehouse_name
+-- quantity_on_hand
+
+
+SELECT p.product_id, p.product_name,  w.warehouse_id, w.warehouse_name, i.quantity_on_hand 
+FROM oes.inventories i LEFT OUTER JOIN  oes.products p
+ON p.product_id = i.product_id
+LEFT OUTER JOIN oes.warehouses w  
+ON i.warehouse_id = w.warehouse_id;
+
+
+
+--3
+
+--Write a query to return the following attributes for all 
+--employees from Australia:
+-- employee_id
+-- first_name
+-- last_name
+-- department_name
+-- job_title
+-- state_province
+
+
+SELECT DISTINCT e.employee_id, e.first_name, e.last_name, d.department_name, j.job_title, l.state_province
+FROM hcm.employees e INNER JOIN hcm.countries c 
+ON e.country_id = c.country_id
+AND c.country_name = 'Australia'
+LEFT OUTER JOIN hcm.departments d
+ON e.department_id = d.department_id
+LEFT OUTER JOIN hcm.jobs j
+ON e.job_id = j.job_id
+LEFT OUTER JOIN hcm.locations l
+ON e.country_id = l.country_id;
+
+--or
+
+
+SELECT 
+	e.employee_id,
+	e.first_name,
+	e.last_name,
+	d.department_name,
+	j.job_title,
+	e.state_province
+FROM hcm.employees e
+LEFT JOIN hcm.departments d
+ON e.department_id = d.department_id
+INNER JOIN hcm.jobs j
+ON e.job_id = j.job_id
+INNER JOIN hcm.countries c
+ON e.country_id = c.country_id
+WHERE c.country_name = 'Australia';
+
+
+--4
+
+--Return the total quantity ordered of each product in each  category. Do not include products which have never been ordered. Include the product name and category name in the 
+--query. Order the results by category name from A to Z and then within each category name order by product name from A to Z.
+
+
+
+
+SELECT pc.category_name,p.product_name, SUM(o.quantity) AS quantity_aggregation FROM oes.order_items o 
+LEFT OUTER JOIN oes.products p 
+ON o.product_id = p.product_id 
+LEFT OUTER JOIN oes.product_categories pc
+ON p.category_id = pc.category_id
+GROUP BY pc.category_name, p.product_name
+ORDER BY pc.category_name, p.product_name;
+
+
+--5
+
+
+--Return the total quantity ordered of each product in each category. Include products which have never been ordered and give these a total quantity ordered of 0. Include the product name 
+--and category name in the query. Order the results by category name from A to Z and then within each category name order by product name from A to Z
+
+
+SELECT pc.category_name,p.product_name, COALESCE(SUM(o.quantity), 0) as total_quantity_ordered FROM oes.products p 
+LEFT JOIN oes.order_items o 
+ON o.product_id = p.product_id 
+JOIN oes.product_categories pc
+ON p.category_id = pc.category_id
+GROUP BY pc.category_name, p.product_name
+ORDER BY pc.category_name, p.product_name;
