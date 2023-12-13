@@ -335,7 +335,8 @@ GROUP BY d.department_name;
 -- first_name
 -- last_name
 -- manager_first_name (alias for first_name)
--- manager_last_name (alias for last_name)
+-- manager_last_name (alias for last_name)
+
 
 SELECT e.employee_id, e.first_name, e.last_name, e2.first_name AS manager_first_name, e2.last_name AS manager_last_name 
 FROM hcm.employees e LEFT OUTER JOIN hcm.employees e2 
@@ -495,3 +496,247 @@ FROM oes.products
 EXCEPT 
 SELECT product_id
 FROM oes.inventories;
+
+-- Subquery Challenges
+
+--1
+
+-- Return the following product details for the cheapest product(s) in the oes.products table:
+-- product_id
+-- product_name
+-- list_price
+-- category_id
+
+SELECT 
+  product_id, 
+  product_name, 
+  list_price, 
+  category_id 
+FROM 
+  oes.products 
+WHERE 
+  list_price = (
+    SELECT 
+      MIN(list_price) 
+    FROM 
+      oes.products
+  );
+
+  -- equivalent using TOP
+
+  SELECT
+	TOP(1) WITH TIES
+	product_id,
+	product_name,
+	list_price,
+	category_id
+	FROM
+	oes.products
+	ORDER BY list_price;
+	
+
+--2
+
+-- Use a correlated subquery to return the following product details for the cheapest product(s) in each product category as given by the category_id column:
+-- product_id
+-- product_name
+-- list_price
+-- category_id
+
+SELECT
+  product_id, 
+  product_name, 
+  list_price, 
+  category_id 
+FROM 
+  oes.products p1 
+WHERE 
+  list_price = (
+    SELECT 
+      MIN(p2.list_price) 
+    FROM 
+      oes.products p2 
+    WHERE 
+      p2.category_id = p1.category_id
+  );
+
+
+--3
+
+-- Return the same result as challenge 2 i.e. the cheapest product(s) in each product category except this time by using an inner join to a derived table
+
+  
+SELECT 
+  p1.product_id, 
+  p1.product_name, 
+  p1.list_price, 
+  p1.category_id 
+FROM 
+  oes.products p1 
+  INNER JOIN (
+    SELECT 
+      category_id, 
+      MIN(list_price) AS min_cat_price 
+    FROM 
+      oes.products 
+    GROUP BY 
+      category_id
+  ) p2 ON p1.category_id = p2.category_id 
+  AND p1.list_price = p2.min_cat_price;
+
+--4
+
+-- Return the same result as challenge 2 and 3 i.e. the cheapest product(s) in each product category except this time by using a common table expression.
+
+-- with window function
+
+WITH p AS (
+  SELECT 
+    product_id, 
+    product_name, 
+    list_price, 
+    category_id, 
+    RANK() OVER (
+      PARTITION BY category_id 
+      ORDER BY 
+        list_price
+    ) AS rnk 
+  FROM 
+    oes.products
+) 
+SELECT 
+  p.product_id, 
+  p.product_name, 
+  p.list_price, 
+  p.category_id
+FROM 
+  p 
+WHERE 
+  p.rnk = 1;
+
+-- Alternate with MIN AND INNER JOIN
+
+WITH cheapest_product_by_category AS (
+  SELECT 
+    category_id, 
+    MIN(list_price) AS min_list_price 
+  FROM 
+    oes.products 
+  GROUP BY 
+    category_id
+) 
+SELECT 
+  p.product_id, 
+  p.product_name, 
+  p.list_price, 
+  p.category_id
+FROM 
+  oes.products p 
+  INNER JOIN cheapest_product_by_category p2 ON p.category_id = p2.category_id 
+  AND p.list_price = p2.min_list_price;
+
+
+--5
+
+-- Repeat challenge 4, except this time include the product category name as given in the oes.product_categories table.
+
+WITH p AS (
+  SELECT 
+    product_id, 
+    product_name, 
+    list_price, 
+    category_id, 
+    RANK() OVER (
+      PARTITION BY category_id 
+      ORDER BY 
+        list_price
+    ) AS rnk 
+  FROM 
+    oes.products
+) 
+SELECT 
+  p.product_id, 
+  p.product_name, 
+  p.list_price, 
+  p.category_id, 
+  pc.category_name 
+FROM 
+  p 
+  LEFT JOIN oes.product_categories pc ON pc.category_id = p.category_id 
+WHERE 
+  p.rnk = 1;
+
+
+--6
+
+-- Background:
+-- The employee_id column in the oes.orders table gives the employee_id of the salesperson who made the sale. 
+
+--Challenge:
+-- Use the NOT IN operator to return all employees who have never been the salesperson for any customer order. Include the following columns from hcm.employees:
+-- employee_id
+-- first_name
+-- last_name
+
+SELECT 
+  employee_id, 
+  first_name, 
+  last_name 
+FROM 
+  hcm.employees 
+WHERE 
+  employee_id NOT IN (
+    SELECT 
+      employee_id 
+    FROM 
+      oes.orders 
+    WHERE 
+      employee_id IS NOT NULL
+  );
+
+--7
+
+--Return the same result as challenge 6, except use WHERE NOT EXISTS
+
+SELECT 
+  employee_id, 
+  first_name, 
+  last_name 
+FROM 
+  hcm.employees e 
+WHERE 
+  NOT EXISTS (
+    SELECT 
+      * 
+    FROM 
+      oes.orders o 
+    WHERE 
+      o.employee_id = e.employee_id
+  );
+
+--8
+
+-- Return unique customers who have ordered the 'PBX Smart Watch 4’. Include:
+-- customer_id
+-- first_name
+-- last_name
+-- email
+
+SELECT 
+  customer_id, 
+  first_name, 
+  last_name, 
+  email 
+FROM 
+  oes.customers 
+WHERE 
+  customer_id IN (
+    SELECT
+      customer_id 
+    FROM 
+      oes.orders 
+      LEFT JOIN oes.order_items ON oes.order_items.order_id = oes.orders.order_id 
+      LEFT JOIN oes.products ON oes.order_items.product_id = oes.products.product_id 
+    WHERE 
+      oes.products.product_name = 'PBX Smart Watch 4'
+  );
