@@ -505,7 +505,8 @@ FROM oes.inventories;
 -- product_id
 -- product_name
 -- list_price
--- category_id
+-- category_id
+
 
 SELECT 
   product_id, 
@@ -541,7 +542,8 @@ WHERE
 -- product_id
 -- product_name
 -- list_price
--- category_id
+-- category_id
+
 
 SELECT
   product_id, 
@@ -638,7 +640,8 @@ FROM
 
 --5
 
--- Repeat challenge 4, except this time include the product category name as given in the oes.product_categories table.
+-- Repeat challenge 4, except this time include the product category name as given in the oes.product_categories table.
+
 
 WITH p AS (
   SELECT 
