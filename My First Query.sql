@@ -956,3 +956,65 @@ FROM
   group by 
   o.shipping_status
 	;
+
+
+-- CREATE TABLE Challenges
+
+--1
+
+-- Create a table called dept in the dbo schema. Specify the following 
+-- columns:
+-- - dept_id INT
+-- - dept_name VARCHAR(50) 
+-- Give the IDENTITY property to the dept_id column. Also, put a 
+-- primary key constraint on the dept_id column. Put a NOT NULL
+-- constraint on the dept_name column.
+
+CREATE TABLE dbo.dept(
+		dept_id INT IDENTITY CONSTRAINT PK_dept_id PRIMARY KEY,
+		dept_name VARCHAR(50) NOT NULL
+		);
+
+
+-- Write an insert statement to insert the following row into the dbo.dept table:
+
+
+-- dept_id |   dept_name
+--   1	   |	Business Intelligence
+
+INSERT INTO dbo.dept( dept_name) VALUES ( 'Business Intelligence');
+
+
+-- Populate the dbo.dept table with more rows: Insert all department names from the hcm.departments table.
+
+INSERT INTO dbo.dept (dept_name) SELECT department_name FROM hcm.departments;
+
+
+--Create a table called emp in the dbo schema. Specify the following columns:
+-- emp_id INT 
+-- first_name VARCHAR(50)
+-- last_name VARCHAR(50)
+-- hire_date DATE
+-- dept_id INT
+
+
+CREATE TABLE dbo.emp(
+		emp_id INT IDENTITY CONSTRAINT PK_emp_id PRIMARY KEY,
+		dept_id INT NOT NULL,
+		first_name VARCHAR(50) NOT NULL,
+		last_name VARCHAR(50) NOT NULL,
+		hire_date DATE NOT NULL,
+		CONSTRAINT FK_dept_id FOREIGN KEY (dept_id) REFERENCES dbo.dept (dept_id)
+		);
+
+
+-- Populate the dbo.emp table with the following two employees:
+
+--emp_id |first_name  |last_name |hire_date		|dept_id
+--1		 |scott       |davis	 |dec-11-2020   |1
+--2		 |miriam	  |yardley	 |dec-05-2020   |1
+
+
+INSERT INTO dbo.emp (first_name, last_name, hire_date, dept_id)
+VALUES('scott', 'davis', '20201211', 1),('miriam', 'yardley', '20201205', 1)
+
