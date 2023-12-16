@@ -1024,3 +1024,8 @@ VALUES('scott', 'davis', '20201211', 1),('miriam', 'yardley', '20201205', 1)
 UPDATE dbo.emp
 	SET last_name = 'Greenbank'
 	WHERE emp_id = 2;
+
+-- DELETE Statement Challenge
+
+DELETE dbo.emp
+WHERE emp_id = 1;
