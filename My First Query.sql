@@ -1018,3 +1018,9 @@ CREATE TABLE dbo.emp(
 INSERT INTO dbo.emp (first_name, last_name, hire_date, dept_id)
 VALUES('scott', 'davis', '20201211', 1),('miriam', 'yardley', '20201205', 1)
 
+
+-- UPDATE TABLE challenge
+
+UPDATE dbo.emp
+	SET last_name = 'Greenbank'
+	WHERE emp_id = 2;
