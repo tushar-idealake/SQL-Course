@@ -1048,3 +1048,206 @@ DROP TABLE IF EXISTS SAMPLEDB.dbo.dept;
 -- Alternate equivalent For legacy SQL
 
 IF OBJECT_ID (N'SAMPLEDB.dbo.dept', N'U') IS NOT NULL DROP TABLE dbo.dept;
+
+
+-- Store Procedures Demo
+
+-- Select all employees from 'Finance' Department
+
+SELECT 
+	e.employee_id,
+	e.first_name,
+	e.last_name,
+	d.department_name
+FROM hcm.employees e INNER JOIN hcm.departments d
+ON e.department_id = d.department_id
+WHERE d.department_name = 'Finance';
+
+GO
+
+
+-- Stored procedure with one input parameter
+
+CREATE PROCEDURE hcm.getEmployeesByDepartment (@department_name VARCHAR(50))
+AS
+SELECT
+	e.employee_id,
+	e.first_name,
+	e.last_name,
+	d.department_name
+FROM hcm.employees e INNER JOIN hcm.departments d
+ON e.department_id = d.department_id
+WHERE d.department_name = @department_name;
+
+GO
+
+-- Execute hcm.getEmployeesByDepartment stored procedure to get
+-- all employees in the 'Finance' department
+
+EXECUTE hcm.getEmployeesByDepartment @department_name ='Finance';
+
+-- or
+
+EXECUTE hcm.getEmployeesByDepartment 'Finance';
+
+--or
+
+EXEC hcm.getEmployeesByDepartment 'Finance';
+
+-- SELECT query that selcts customers who contain the string '34th' in their street address
+
+SELECT 
+customer_id,
+first_name,
+last_name,
+email,
+street_address
+FROM
+oes.customers
+WHERE street_address LIKE '%34th%'
+
+-- Store procedure to search Customers by street address which includes provided searchstring
+
+GO
+
+CREATE PROCEDURE oes.searchCustomersByStreetAddress
+(
+@street_address_search VARCHAR(50)
+)
+AS
+SELECT
+	customer_id,
+	first_name,
+	last_name,
+	email,
+	street_address
+FROM oes.customers
+WHERE street_address LIKE '%' + @street_address_search + '%';
+
+-- Executing the query
+
+EXEC oes.searchCustomersByStreetAddress '34th';
+
+-- SELECT query that selects customers from AUstralia who have gmail addresses
+
+SELECT * FROM oes.customers;
+
+
+SELECT
+cu.customer_id,
+cu.first_name,
+cu.last_name,
+cu.email,
+ct.country_name
+FROM oes.customers cu
+INNER JOIN hcm.countries ct
+ON cu.country_id = ct.country_id
+WHERE ct.country_name = 'Australia'
+AND cu.email LIKE '%gmail.com'
+
+GO
+
+-- Generalize above query to search customers from particular country with email
+
+CREATE PROCEDURE oes.searchCustomersByCountryEmail (@country_name VARCHAR(50), @email VARCHAR(320))
+AS
+BEGIN
+SELECT
+	cu.customer_id,
+	cu.first_name,
+	cu.last_name,
+	cu.email,
+	ct.country_name
+FROM oes.customers cu
+INNER JOIN hcm.countries ct
+ON cu.country_id = ct.country_id
+WHERE ct.country_name = @country_name
+AND cu.email LIKE '%' + @email
+END
+GO
+;
+
+EXEC oes.searchCustomersByCountryEmail @country_name = 'Australia', @email ='yahoo.com';
+
+
+-- Select employees who have a salary greater than or equal to 80000 and less than or equal 100000
+
+SELECT * FROM hcm.employees
+WHERE salary >= 80000
+AND salary <= 100000;
+
+-- Create generalized Store procedure for filtering employees based on minimum and maximum salary
+
+GO
+
+CREATE PROCEDURE hcm.filterEmployeesBySalary(@min_salary numeric(12,2), @max_salary numeric(12,2))
+AS
+BEGIN
+SELECT * FROM hcm.employees
+WHERE salary >= @min_salary
+AND salary <= @max_salary;
+END
+
+
+EXEC hcm.filterEmployeesBySalary @min_salary = 80000, @max_salary = 100000;
+
+
+-- Optional Parameters
+
+/*
+
+
+*/
+
+ALTER PROCEDURE hcm.filterEmployeesBySalary(@min_salary numeric(12,2) = 0, @max_salary numeric(12,2) = 99999999)
+AS
+BEGIN
+SELECT * FROM hcm.employees
+WHERE salary >= @min_salary
+AND salary <= @max_salary;
+END
+
+
+-- Select Employees with default salary range i.e min = 0 max = 99999999 
+
+EXEC hcm.filterEmployeesBySalary;
+
+-- min of 90000
+EXEC hcm.filterEmployeesBySalary @min_salary = 90000;
+
+-- max of 150000
+
+EXEC hcm.filterEmployeesBySalary @max_salary = 150000;
+
+-- Output parameters
+GO
+
+CREATE PROCEDURE dbo.addNewPark(
+@park_name VARCHAR(50),
+@entry_fee DECIMAL(6,2) = 0,
+@new_park_id INT OUT)
+AS
+-- No messages reporting How many rows were affected
+SET NOCOUNT ON
+-- All errors will cause transaction to rollback IF XACT_ABORT ON IF Off then not all errors will cause transaction to rollback
+SET XACT_ABORT ON;
+BEGIN
+INSERT INTO dbo.parks2 (park_name, entry_fee)
+VALUES (@park_name, @entry_fee);
+-- Setting new park id output parameter to the value returned by SCOPE_IDENTITY (Which returns IDENTITY of last INSERT that occured)
+SELECT @new_park_id = SCOPE_IDENTITY();
+END
+GO
+
+-- Declare a variable called @ParkID of data type INT
+-- This will store the value returned by the @new_park_id output parameter
+
+DECLARE @ParkID INT;
+
+-- Execute the stored procedure to add national park set OUT for variable that is set in Execute query
+
+EXEC dbo.addNewPark @park_name = 'National Park', @entry_fee = 20.00, @new_park_id = @ParkID OUT;
+
+-- Return Output scalar variable
+SELECT @ParkID
+
