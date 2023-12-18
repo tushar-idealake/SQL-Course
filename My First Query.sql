@@ -1029,3 +1029,22 @@ UPDATE dbo.emp
 
 DELETE dbo.emp
 WHERE emp_id = 1;
+
+-- DROP TABLE Statement
+
+
+-- Initially not able to drop table as Foreign Key Constraint was present
+
+DROP TABLE SAMPLEDB.dbo.dept;
+
+-- Removing Foreign KEY Constraint using ALTER TABLE + DROP CONSTRAINT
+
+ALTER TABLE dbo.emp DROP CONSTRAINT [FK_dept_id];
+
+-- IF Exists only available in SQL SERVER 2016 +
+
+DROP TABLE IF EXISTS SAMPLEDB.dbo.dept;
+
+-- Alternate equivalent For legacy SQL
+
+IF OBJECT_ID (N'SAMPLEDB.dbo.dept', N'U') IS NOT NULL DROP TABLE dbo.dept;
