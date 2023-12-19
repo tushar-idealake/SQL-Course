@@ -1427,5 +1427,33 @@ GO
   sp_rename 'oes.customers.phone',
   'main_phone',
   'COLUMN';
-			 
 
+
+ -- UNIQUE constraint challenge
+
+ -- Use an ALTER TABLE statement to add UNIQUE constraint to
+ -- the departma=ent_name column in the hcm.departments
+ -- table
+
+ -- Checking if department_name coulumn has only unique values
+
+SELECT
+  COUNT(*) as total_count,
+  COUNT(DISTINCT department_name) as unique_value_count
+FROM
+  hcm.departments;
+
+-- Adding unique key
+
+ALTER TABLE
+  hcm.departments
+ADD
+  CONSTRAINT uk_departments_department_name UNIQUE (department_name);
+
+ -- Attempting to insert a duplicate value for department_name
+INSERT INTO
+  hcm.departments (department_name, location_id)
+VALUES
+('Administration', 1800);
+
+-- GIVES ERROR FOR UNIQUE CONSTRAINT
