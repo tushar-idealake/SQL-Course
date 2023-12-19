@@ -1251,3 +1251,136 @@ EXEC dbo.addNewPark @park_name = 'National Park', @entry_fee = 20.00, @new_park_
 -- Return Output scalar variable
 SELECT @ParkID
 
+ -- Stored Procedure Challenges
+
+
+--1
+
+-- Create a stored procedure called oes.getQuantityOnHand that 
+-- returns the quantity_on_hand in the oes.inventories table for a 
+-- given product_id and warehouse_id.
+-- Execute the stored procedure to return the quantity on hand of 
+-- product id 4 at warehouse id 2.
+
+-- Creating Stored Procedure
+GO
+  CREATE PROCEDURE oes.getQuantityOnHand (@product_id INT, @warehouse_id INT) 
+  AS 
+  BEGIN
+SELECT
+  i.quantity_on_hand
+FROM
+  oes.inventories i
+WHERE
+  i.product_id = @product_id
+  AND i.warehouse_id = @warehouse_id
+END
+
+-- Executing Stored Procedure
+EXEC oes.getQuantityOnHand 4,2
+
+
+--2
+
+-- Create a stored procedure called oes.getCurrentProducts
+-- that returns current products (discontinued = 0) in the 
+-- oes.products table. In addition, define two input parameters:
+-- - A parameter called @product_name of data type VARCHAR(100). 
+-- Allow users to wildcard search on the product_name.
+-- - A parameter called @max_list_price of data type 
+-- DECIMAL(19,4). Allow users to only include current products 
+-- that have a list_price that is less than or equal to a 
+-- specified value for this parameter.
+
+
+-- Creating Stored Procedure
+GO
+  CREATE PROCEDURE oes.getCurrentProducts (
+    @product_name VARCHAR(100),
+    @max_list_price DECIMAL(19, 4)
+  ) 
+  AS 
+  BEGIN
+SELECT
+  *
+FROM
+  oes.products p
+WHERE
+  p.discontinued = 0
+  AND p.product_name LIKE '%' + @product_name + '%'
+  AND p.list_price <= @max_list_price
+END
+
+-- Executing Stored Procedure
+
+EXEC oes.getCurrentProducts 'Drone', 700
+
+--3
+
+-- Create a stored procedure called oes.transferFunds that 
+-- transfers money from one bank account to another bank 
+-- account by updating the balance column in the 
+-- oes.bank_accounts table. Also, insert the bank transaction 
+-- details into oes.bank_transactions table. Define three input 
+-- parameters:
+-- - @withdraw_account_id of data type INT
+-- - @deposit_account_id of data type INT
+-- - @transfer_amount of data type DECIMAL(30,2)
+-- Test the stored procedure by transferring $100 from Anna’s 
+-- bank account to Bob’s account.
+
+-- Creating Stored Procedure
+
+GO
+ CREATE PROCEDURE oes.transferFunds (
+    @withdraw_account_id INT,
+    @deposit_account_id INT,
+    @transfer_amount DECIMAL(30, 2)
+  ) AS
+SET
+  NOCOUNT ON
+SET
+  XACT_ABORT ON;
+BEGIN
+BEGIN TRANSACTION ;
+-- Update sender's account by reducing specified amount
+UPDATE
+  [oes].[bank_accounts]
+SET
+  balance = balance - @transfer_amount
+WHERE
+  account_id = @withdraw_account_id 
+  -- Update receiver's account by adding specified amount
+UPDATE
+  [oes].[bank_accounts]
+SET
+  balance = balance + @transfer_amount
+WHERE
+  account_id = @deposit_account_id 
+  -- Add entry for transaction in bank transaction table
+INSERT INTO
+  [oes].[bank_transactions] (from_account_id, to_account_id, amount)
+VALUES
+  (
+    @withdraw_account_id,
+    @deposit_account_id,
+    @transfer_amount
+  ) 
+  COMMIT TRANSACTION ;
+  END
+
+-- Executing Store Procedure
+  EXEC oes.transferFunds 2, 1, 100
+
+-- Checking the transaction and account balances of sender and receiver
+
+ SELECT
+  *
+FROM
+  [oes].[bank_accounts]
+
+
+SELECT
+  *
+FROM
+  [oes].[bank_transactions]
