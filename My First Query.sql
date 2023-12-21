@@ -1486,6 +1486,7 @@ CREATE NONCLUSTERED INDEX idx_location_id ON oes.warehouses (location_id) INCLUD
 -- oes.products table.
 
 CREATE UNIQUE INDEX idx_product_name ON oes.products (product_name);
+-- After Executing above query We won't be able to add duplicate values in product_name column
 
 -- Rewrite the following query to make it sargable:
 -- SELECT
@@ -1516,6 +1517,8 @@ CREATE INDEX idx_unshipped_orders ON oes.orders (shipped_date)
 WHERE 
   shipped_date IS NULL;
 
+  SELECT * FROM oes.orders WHERE shipped_date IS NULL;
+
 --5
 
 
@@ -1537,6 +1540,9 @@ AND last_name = 'Jones';
 
 -- Index for above sargable query
 
-CREATE INDEX ix_first_last_name ON oes.customers (first_name, last_name) INCLUDE(
-  customer_id, email, street_address
+CREATE INDEX ix_first_last_name_incl_email_street_addr ON oes.customers (first_name, last_name) INCLUDE(
+   email, street_address
 );
+
+-- updated index name and removed customer_id from include as it is primary key and 
+-- therefore has custered index and gets returned in every query
